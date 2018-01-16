@@ -29,6 +29,7 @@ struct rockchip_grf_info {
 };
 
 #define RK3036_GRF_SOC_CON0		0x140
+#define RK3036_GRF_SOC_CON1		0x144
 
 static const struct rockchip_grf_value rk3036_defaults[] __initconst = {
 	/*
@@ -36,6 +37,7 @@ static const struct rockchip_grf_value rk3036_defaults[] __initconst = {
 	 * clock-framework and the mmc controllers making them unreliable.
 	 */
 	{ "jtag switching", RK3036_GRF_SOC_CON0, HIWORD_UPDATE(0, 1, 11) },
+	{ "vcodec select", RK3036_GRF_SOC_CON1, HIWORD_UPDATE(1, 1, 3) },
 };
 
 static const struct rockchip_grf_info rk3036_grf __initconst = {
