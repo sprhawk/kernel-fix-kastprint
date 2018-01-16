@@ -159,6 +159,10 @@
 	status = "okay";
 };
 
+&hevc {
+	status = "okay";
+};
+
 &hevc_mmu {
 	status = "okay";
 };
@@ -697,6 +701,10 @@
 	status = "okay";
 };
 
+&vdpu {
+	status = "okay";
+};
+
 &vop {
 	status = "okay";
 };
@@ -705,11 +713,11 @@
 	status = "okay";
 };
 
-&vpu_combo {
+&vpu_mmu {
 	status = "okay";
 };
 
-&vpu_mmu {
+&video_service {
 	status = "okay";
 };
 
