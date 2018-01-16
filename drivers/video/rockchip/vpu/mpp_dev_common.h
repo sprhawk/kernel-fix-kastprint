@@ -82,6 +82,10 @@ struct rockchip_mpp_dev {
 	struct cdev mpp_cdev;
 	dev_t dev_id;
 
+	struct regmap *syscon;
+	u32 ctrl_reg;
+	u32 ctrl_msk;
+	u32 ctrl_val;
 	/* MPP Service */
 	struct mpp_service_node *srv;
 };

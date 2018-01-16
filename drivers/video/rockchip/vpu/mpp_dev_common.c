@@ -15,6 +15,7 @@
 
 #include <linux/delay.h>
 #include <linux/interrupt.h>
+#include <linux/mfd/syscon.h>
 #include <linux/module.h>
 #include <linux/of.h>
 #include <linux/of_platform.h>
@@ -328,6 +329,28 @@ static void rockchip_mpp_run(struct rockchip_mpp_dev *mpp_dev,
 	mpp_debug_leave();
 }
 
+static int mpp_dev_common_select_ctrl(struct rockchip_mpp_dev *mpp_dev)
+{
+	int ret;
+	u32 reg, msk, val;
+
+	if (!mpp_dev->syscon)
+		return 0;
+
+	reg = mpp_dev->ctrl_reg;
+	msk = mpp_dev->ctrl_msk;
+	val = mpp_dev->ctrl_val;
+
+	ret = regmap_update_bits(mpp_dev->syscon, reg, msk, val);
+	if (ret < 0) {
+		dev_err(mpp_dev->dev, "select %s failed\n",
+			dev_name(mpp_dev->dev));
+		return ret;
+	}
+
+	return 0;
+}
+
 static void rockchip_mpp_try_run(struct rockchip_mpp_dev *mpp_dev)
 {
 	int ret = 0;
@@ -348,6 +371,9 @@ static void rockchip_mpp_try_run(struct rockchip_mpp_dev *mpp_dev)
 		ret = mpp_dev->ops->prepare(mpp_dev, task);
 	if (ret == -EINVAL)
 		mpp_srv_wait_to_run(mpp_dev->srv);
+
+	/* FIXME: select the device before prepare() */
+	mpp_dev_common_select_ctrl(mpp_dev);
 	/*
 	 * FIXME if the hardware supports task query, but we still need to lock
 	 * the running list and lock the mpp service in the current state.
@@ -673,6 +699,43 @@ static struct mpp_service_node *mpp_dev_load_srv(struct platform_device *p)
 	return client;
 }
 
+static int mpp_dev_load_ctrl(struct rockchip_mpp_dev *mpp_dev,
+			     struct device_node *np)
+{
+	u32 ctrl_reg, ctrl_msk, ctrl_val;
+	int ret;
+
+	mpp_dev->syscon = syscon_regmap_lookup_by_phandle(np, "syscon");
+	if (IS_ERR(mpp_dev->syscon)) {
+		mpp_dev->syscon = NULL;
+		return PTR_ERR(mpp_dev->syscon);
+	}
+
+	ret = of_property_read_u32_index(np, "syscon", 1, &ctrl_reg);
+	if (ret < 0) {
+		dev_err(mpp_dev->dev, "no offset in syscon\n");
+		return -EINVAL;
+	}
+
+	ret = of_property_read_u32_index(np, "syscon", 2, &ctrl_msk);
+	if (ret < 0) {
+		dev_err(mpp_dev->dev, "no mask in syscon\n");
+		return -EINVAL;
+	}
+
+	ret = of_property_read_u32_index(np, "syscon", 3, &ctrl_val);
+	if (ret < 0) {
+		dev_err(mpp_dev->dev, "no value in syscon\n");
+		return -EINVAL;
+	}
+
+	mpp_dev->ctrl_reg = ctrl_reg;
+	mpp_dev->ctrl_msk = ctrl_msk;
+	mpp_dev->ctrl_val = ctrl_val;
+
+	return mpp_dev_common_select_ctrl(mpp_dev);
+}
+
 /* The device will do more probing work after this */
 int mpp_dev_common_probe(struct rockchip_mpp_dev *mpp_dev,
 			 struct platform_device *pdev,
@@ -724,6 +787,8 @@ int mpp_dev_common_probe(struct rockchip_mpp_dev *mpp_dev,
 		err = PTR_ERR(mpp_dev->reg_base);
 		goto failed;
 	}
+
+	mpp_dev_load_ctrl(mpp_dev, dev->of_node);
 
 	pm_runtime_get_sync(dev);
 	/*
