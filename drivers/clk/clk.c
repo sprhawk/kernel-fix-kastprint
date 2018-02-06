@@ -3281,6 +3281,7 @@ struct clk *__of_clk_get_from_provider(struct of_phandle_args *clkspec,
 	struct of_clk_provider *provider;
 	struct clk *clk = ERR_PTR(-EPROBE_DEFER);
 
+    pr_info("inside __of_clk_glk_from_provider: dev_id:%s, con_id:%s\n", dev_id, con_id);
 	if (!clkspec)
 		return ERR_PTR(-EINVAL);
 

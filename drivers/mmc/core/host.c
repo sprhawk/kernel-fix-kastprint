@@ -305,6 +305,8 @@ int mmc_of_parse(struct mmc_host *host)
 		host->dsr_req = 0;
 	}
 
+    dev_info(host->parent,
+            "before mmc_pwrseq_alloc \n");
 	return mmc_pwrseq_alloc(host);
 }
 
@@ -392,9 +394,21 @@ int mmc_add_host(struct mmc_host *host)
 	WARN_ON((host->caps & MMC_CAP_SDIO_IRQ) &&
 		!host->ops->enable_sdio_irq);
 
+    if(!(host->restrict_caps & RESTRICT_CARD_TYPE_SDIO)) {
+		dev_info(host->parent,
+			 "host->restrict_caps is not card type sdio. \n");
+    }
+    else {
+		dev_info(host->parent,
+			 "host->restrict_caps is card type sdio. \n");
+    }
+
 	err = device_add(&host->class_dev);
-	if (err)
+	if (err) {
+        dev_dbg(host->parent,
+                "device_add failed err \n");
 		return err;
+    }
 
 	led_trigger_register_simple(dev_name(&host->class_dev), &host->led);
 

@@ -35,15 +35,21 @@ static struct clk *__of_clk_get(struct device_node *np, int index,
 	struct clk *clk;
 	int rc;
 
+    pr_info("inside _of_clk_get\n");
 	if (index < 0)
 		return ERR_PTR(-EINVAL);
 
 	rc = of_parse_phandle_with_args(np, "clocks", "#clock-cells", index,
 					&clkspec);
-	if (rc)
+	if (rc) {
+        pr_info("test output: of_parse_phandle_with_args(np, \"clocks\" \"#clock-cells\", index(%d) &clkspec\n");
 		return ERR_PTR(rc);
+    }
 
 	clk = __of_clk_get_from_provider(&clkspec, dev_id, con_id, true);
+    if(IS_ERR(clk)) {
+        pr_info("test output: __of_clk_get_from_provider failed %d\n", PTR_ERR(clk));
+    }
 	of_node_put(clkspec.np);
 
 	return clk;
@@ -70,8 +76,11 @@ static struct clk *__of_clk_get_by_name(struct device_node *np,
 		 * "clock-names" property.  If it cannot be found, then
 		 * index will be an error code, and of_clk_get() will fail.
 		 */
-		if (name)
+		if (name) {
 			index = of_property_match_string(np, "clock-names", name);
+            pr_info("%s: index(%d) name:%s\n", __FUNCTION__, index, name);
+        }
+
 		clk = __of_clk_get(np, index, dev_id, name);
 		if (!IS_ERR(clk)) {
 			break;

@@ -100,25 +100,41 @@ struct mmc_pwrseq *mmc_pwrseq_simple_alloc(struct mmc_host *host,
 	struct mmc_pwrseq_simple *pwrseq;
 	int ret = 0;
 
+    dev_info(host,
+            "%s \n",
+            __FUNCTION__);
 	pwrseq = kzalloc(sizeof(*pwrseq), GFP_KERNEL);
-	if (!pwrseq)
+	if (!pwrseq) {
+        dev_info(host,
+                "%s kzalloc failed\n",
+                __FUNCTION__);
 		return ERR_PTR(-ENOMEM);
+    }
 
 	pwrseq->ext_clk = clk_get(dev, "ext_clock");
 	if (IS_ERR(pwrseq->ext_clk) &&
 	    PTR_ERR(pwrseq->ext_clk) != -ENOENT) {
 		ret = PTR_ERR(pwrseq->ext_clk);
+        dev_info(host,
+                "%s clk_get failed:%d \n",
+                __FUNCTION__, ret);
 		goto free;
 	}
 
 	pwrseq->reset_gpios = gpiod_get_array(dev, "reset", GPIOD_OUT_HIGH);
 	if (IS_ERR(pwrseq->reset_gpios)) {
 		ret = PTR_ERR(pwrseq->reset_gpios);
+        dev_info(host,
+                "%s gpiod_get_array failed:%d \n",
+                __FUNCTION__, ret);
 		goto clk_put;
 	}
 
 	pwrseq->pwrseq.ops = &mmc_pwrseq_simple_ops;
 
+    dev_info(host,
+            "%s succeeded\n",
+            __FUNCTION__);
 	return &pwrseq->pwrseq;
 clk_put:
 	if (!IS_ERR(pwrseq->ext_clk))

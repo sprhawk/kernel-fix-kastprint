@@ -2667,6 +2667,8 @@ static void dw_mci_slot_of_parse(struct dw_mci_slot *slot)
 
 static int dw_mci_init_slot(struct dw_mci *host, unsigned int id)
 {
+    dev_info(host->dev,
+            "inside dw_mci_init_slot\n");
 	struct mmc_host *mmc;
 	struct dw_mci_slot *slot;
 	const struct dw_mci_drv_data *drv_data = host->drv_data;
@@ -2725,9 +2727,14 @@ static int dw_mci_init_slot(struct dw_mci *host, unsigned int id)
 
 	dw_mci_slot_of_parse(slot);
 
+    dev_info(host->dev,
+            "before mmc_of_parse\n");
 	ret = mmc_of_parse(mmc);
-	if (ret)
+	if (ret) {
+        dev_info(host->dev,
+                "error mmc_of_parse:%d caps(0x%x)\n", ret, ((struct mmc_host *)host->dev)->caps);
 		goto err_host_allocated;
+    }
 
 	/* Useful defaults if platform data is unset. */
 	if (host->use_dma == TRANS_MODE_IDMAC) {
@@ -2753,6 +2760,8 @@ static int dw_mci_init_slot(struct dw_mci *host, unsigned int id)
 		mmc->max_seg_size = mmc->max_req_size;
 	}
 
+    dev_info(host->dev,
+            "before dw_mci_get_cd\n");
 	dw_mci_get_cd(mmc);
 
 	ret = mmc_add_host(mmc);

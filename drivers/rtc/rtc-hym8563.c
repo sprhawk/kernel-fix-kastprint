@@ -474,12 +474,17 @@ static int hym8563_init_device(struct i2c_client *client)
 
 	/* Clear stop flag if present */
 	ret = i2c_smbus_write_byte_data(client, HYM8563_CTL1, 0);
-	if (ret < 0)
+	if (ret < 0) {
+        dev_err(&client->dev, "%s: error write byte data HYM8563_CTL1(%x)\n", __func__, HYM8563_CTL1);
 		return ret;
+    }
 
 	ret = i2c_smbus_read_byte_data(client, HYM8563_CTL2);
-	if (ret < 0)
+	if (ret < 0) {
+        dev_err(&client->dev, "%s: error read byte data HYM8563_CTL2(%x)\n", __func__, HYM8563_CTL2);
 		return ret;
+    }
+    dev_info(&client->dev, "%s: read byte data HYM8563_CTL2(%x): %x\n", __func__, HYM8563_CTL2, ret);
 
 	/* Disable alarm and timer interrupts */
 	ret &= ~HYM8563_CTL2_AIE;
@@ -494,7 +499,9 @@ static int hym8563_init_device(struct i2c_client *client)
 
 	ret &= ~HYM8563_CTL2_TI_TP;
 
-	return i2c_smbus_write_byte_data(client, HYM8563_CTL2, ret);
+	ret = i2c_smbus_write_byte_data(client, HYM8563_CTL2, ret);
+    dev_info(&client->dev, "%s: write byte data HYM8563_CTL2(%x) returned: %x\n", __func__, HYM8563_CTL2, ret);
+    return ret;
 }
 
 #ifdef CONFIG_PM_SLEEP
